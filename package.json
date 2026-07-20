@@ -12,6 +12,7 @@
     "@clerk/nextjs": "^7.5.20",
     "@prisma/client": "^6.19.3",
     "next": "15.5.20",
+    "octokit": "^5.0.5",
     "prisma": "^6.19.3",
     "react": "^19.1.4",
     "react-dom": "^19.1.4"

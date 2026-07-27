@@ -19,28 +19,46 @@ model User {
   githubUsername    String?
   githubAccessToken String?
 
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   repositories Repository[]
 }
 
 model Repository {
-  id            String   @id @default(cuid())
-  githubId      Int      @unique
-  name          String
-  fullName      String
-  description   String?
-  htmlUrl       String
-  cloneUrl      String
-  defaultBranch String
-  isPrivate     Boolean
-  language      String?
+  id              String   @id @default(cuid())
+  githubId        Int      @unique
+  name            String
+  fullName        String
+  description     String?
+  htmlUrl         String
+  cloneUrl        String
+  defaultBranch   String
+  isPrivate       Boolean
+  language        String?
   stargazersCount Int
   forksCount      Int
-  createdAt      DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  ownerId       String
-  owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  ownerId         String
+  owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  analysis RepositoryAnalysis?
+
   @@index([ownerId])
+}
+
+model RepositoryAnalysis {
+  id           String   @id @default(cuid())
+  summary      String
+  techStack    String[]
+  difficulty   String?
+  architecture String?
+  suggestions  String[]
+
+  repositoryId String     @unique
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

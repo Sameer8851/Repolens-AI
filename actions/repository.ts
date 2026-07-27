@@ -2,7 +2,8 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { getRepositories } from "@/lib/github";
+import { getRepositories, getRepositoryReadme } from "@/lib/github";
+import { analyzeRepository } from "@/lib/ai";
 
 export async function syncRepositories() {
   const { userId } = await auth();
@@ -23,10 +24,8 @@ export async function syncRepositories() {
   }
   const repositories = await getRepositories(user.githubAccessToken);
 
-
-
   for (const repo of repositories) {
-    await prisma.repository.upsert({
+    const repository = await prisma.repository.upsert({
       where: {
         githubId: repo.id,
       },
@@ -57,10 +56,42 @@ export async function syncRepositories() {
         ownerId: user.id,
       },
     });
+    const owner = repo.full_name.split("/")[0];
+    const readme = await getRepositoryReadme(
+      user.githubAccessToken,
+      owner,
+      repo.name,
+    );
+    if (!readme) {
+      continue;
+    }
+    const readmeContent = Buffer.from(readme.content, "base64").toString(
+      "utf-8",
+    );
+    const analysis = await analyzeRepository(readmeContent);
+    await prisma.repositoryAnalysis.upsert({
+  where: {
+    repositoryId: repository.id,
+  },
+  update: {
+    summary: analysis.summary,
+    techStack: analysis.techStack,
+    difficulty: analysis.difficulty,
+    architecture: analysis.architecture,
+    suggestions: analysis.suggestions,
+  },
+  create: {
+    repositoryId: repository.id,
+    summary: analysis.summary,
+    techStack: analysis.techStack,
+    difficulty: analysis.difficulty,
+    architecture: analysis.architecture,
+    suggestions: analysis.suggestions,
+  },
+});
   }
   return {
     success: true,
     message: "Repositories synced successfully",
   };
-
 }

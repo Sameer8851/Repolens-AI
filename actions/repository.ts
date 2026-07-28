@@ -23,6 +23,8 @@ export async function syncRepositories() {
     throw new Error("GitHub account not connected");
   }
   const repositories = await getRepositories(user.githubAccessToken);
+  let analyzedCount = 0;
+  const MAX_ANALYSIS_PER_SYNC = 4;
 
   for (const repo of repositories) {
     const repository = await prisma.repository.upsert({
@@ -56,6 +58,15 @@ export async function syncRepositories() {
         ownerId: user.id,
       },
     });
+    const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
+      where: {
+        repositoryId: repository.id,
+      },
+    });
+
+    if (existingAnalysis) {
+      continue;
+    }
     const owner = repo.full_name.split("/")[0];
     const readme = await getRepositoryReadme(
       user.githubAccessToken,
@@ -68,27 +79,31 @@ export async function syncRepositories() {
     const readmeContent = Buffer.from(readme.content, "base64").toString(
       "utf-8",
     );
+    if (analyzedCount >= MAX_ANALYSIS_PER_SYNC) {
+  continue;
+}
     const analysis = await analyzeRepository(readmeContent);
     await prisma.repositoryAnalysis.upsert({
-  where: {
-    repositoryId: repository.id,
-  },
-  update: {
-    summary: analysis.summary,
-    techStack: analysis.techStack,
-    difficulty: analysis.difficulty,
-    architecture: analysis.architecture,
-    suggestions: analysis.suggestions,
-  },
-  create: {
-    repositoryId: repository.id,
-    summary: analysis.summary,
-    techStack: analysis.techStack,
-    difficulty: analysis.difficulty,
-    architecture: analysis.architecture,
-    suggestions: analysis.suggestions,
-  },
-});
+      where: {
+        repositoryId: repository.id,
+      },
+      update: {
+        summary: analysis.summary,
+        techStack: analysis.techStack,
+        difficulty: analysis.difficulty,
+        architecture: analysis.architecture,
+        suggestions: analysis.suggestions,
+      },
+      create: {
+        repositoryId: repository.id,
+        summary: analysis.summary,
+        techStack: analysis.techStack,
+        difficulty: analysis.difficulty,
+        architecture: analysis.architecture,
+        suggestions: analysis.suggestions,
+      },
+    });
+    analyzedCount++;
   }
   return {
     success: true,

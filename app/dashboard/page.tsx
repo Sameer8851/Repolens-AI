@@ -1,9 +1,12 @@
 import { syncUser } from "@/actions/user";
 import { ConnectGitHubButton } from "@/components/github/connect-github-button";
 import { syncRepositories } from "@/actions/repository";
+import { getDashboardRepositories } from "@/actions/dashboard";
+import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
 
 export default async function DashboardPage() {
   const user = await syncUser();
+  const repositories = await getDashboardRepositories();
   await syncRepositories();
 
   return (
@@ -13,12 +16,17 @@ export default async function DashboardPage() {
       </h1>
 
       <div className="mt-6">
-        <ConnectGitHubButton />
+        {!user?.githubAccessToken && <ConnectGitHubButton />}
       </div>
 
-      <pre className="mt-6 rounded bg-gray-100 p-4">
-        {JSON.stringify(user, null, 2)}
-      </pre>
+      <div className="mt-8 space-y-6">
+  {repositories.map((repository) => (
+    <RepositoryCard
+      key={repository.id}
+      repository={repository}
+    />
+  ))}
+</div>
     </div>
   );
 }

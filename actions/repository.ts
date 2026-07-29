@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { getRepositories, getRepositoryReadme } from "@/lib/github";
 import { analyzeRepository } from "@/lib/ai";
+import { scanGitRepository } from "@/lib/scanner";
 
 export async function syncRepositories() {
   const { userId } = await auth();
@@ -58,6 +59,29 @@ export async function syncRepositories() {
         ownerId: user.id,
       },
     });
+    const scannedFiles = await scanGitRepository(
+      repo.clone_url,
+      user.githubAccessToken,
+    );
+
+    await prisma.repositoryFile.deleteMany({
+      where: {
+        repositoryId: repository.id,
+      },
+    });
+
+    await prisma.repositoryFile.createMany({
+      data: scannedFiles.map((file) => ({
+        repositoryId: repository.id,
+        path: file.path,
+        name: file.name,
+        extension: file.extension,
+        language: file.language ?? null,
+        size: file.size,
+        lineCount: file.lineCount,
+      })),
+    });
+
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {
         repositoryId: repository.id,
@@ -80,8 +104,8 @@ export async function syncRepositories() {
       "utf-8",
     );
     if (analyzedCount >= MAX_ANALYSIS_PER_SYNC) {
-  continue;
-}
+      continue;
+    }
     const analysis = await analyzeRepository(readmeContent);
     await prisma.repositoryAnalysis.upsert({
       where: {

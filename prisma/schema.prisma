@@ -44,6 +44,7 @@ model Repository {
   owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   analysis RepositoryAnalysis?
+  files RepositoryFile[]
 
   @@index([ownerId])
 }
@@ -61,4 +62,25 @@ model RepositoryAnalysis {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model RepositoryFile {
+  id           String   @id @default(cuid())
+
+  path         String
+  name         String
+  extension    String
+  language     String?
+  size         Int
+  lineCount    Int
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([repositoryId])
+  @@index([language])
+  @@index([extension])
 }

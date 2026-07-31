@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getRepositories, getRepositoryReadme } from "@/lib/github";
 import { analyzeRepository } from "@/lib/ai";
 import { scanGitRepository } from "@/lib/scanner";
+import { analyzeLanguages } from "@/lib/analyzer/language";
 
 export async function syncRepositories() {
   const { userId } = await auth();
@@ -79,6 +80,24 @@ export async function syncRepositories() {
         language: file.language ?? null,
         size: file.size,
         lineCount: file.lineCount,
+      })),
+    });
+
+    const languageStats = analyzeLanguages(scannedFiles);
+
+    await prisma.languageStat.deleteMany({
+      where: {
+        repositoryId: repository.id,
+      },
+    });
+
+    await prisma.languageStat.createMany({
+      data: languageStats.map((stat) => ({
+        repositoryId: repository.id,
+        language: stat.language,
+        fileCount: stat.fileCount,
+        lineCount: stat.lineCount,
+        percentage: stat.percentage,
       })),
     });
 

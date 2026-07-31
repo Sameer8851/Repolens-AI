@@ -45,6 +45,7 @@ model Repository {
 
   analysis RepositoryAnalysis?
   files RepositoryFile[]
+  languageStats LanguageStat[]
 
   @@index([ownerId])
 }
@@ -83,4 +84,22 @@ model RepositoryFile {
   @@index([repositoryId])
   @@index([language])
   @@index([extension])
+}
+
+model LanguageStat {
+  id String @id @default(cuid())
+
+  language String
+
+  fileCount Int
+  lineCount Int
+  percentage Float
+
+  repositoryId String
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repositoryId])
 }

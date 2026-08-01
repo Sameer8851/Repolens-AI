@@ -1,13 +1,13 @@
 import { readdir, stat, readFile } from "fs/promises";
 import { join, relative, extname, basename } from "path";
 
-import { IGNORE_DIRECTORIES } from "./ignore";
-import { detectLanguage } from "./language";
-import { ScannedFile } from "./types";
+import { IGNORE_DIRECTORIES } from "../../scanner/ignore";
+import { detectLanguage } from "../../scanner/language";
+import { ScannedFile,ScanResult } from "../../scanner/types";
 
 export async function scanRepository(
-  repositoryPath: string,
-): Promise<ScannedFile[]> {
+    repositoryPath: string
+): Promise<ScanResult> {
   const files: ScannedFile[] = [];
 
   async function walk(currentPath: string) {
@@ -43,5 +43,8 @@ export async function scanRepository(
 
   await walk(repositoryPath);
 
-  return files;
+  return {
+    repositoryPath,
+    files,
+};
 }

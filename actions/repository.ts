@@ -3,9 +3,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { getRepositories, getRepositoryReadme } from "@/lib/github";
-import { analyzeRepository } from "@/lib/ai";
-import { scanGitRepository } from "@/lib/scanner";
-import { analyzeLanguages } from "@/lib/analyzer/language";
+import { analyzeRepository } from "@/lib/ai/repository-review";
+import { runStaticAnalysis } from "@/lib/analysis/engine";
 
 export async function syncRepositories() {
   const { userId } = await auth();
@@ -60,10 +59,13 @@ export async function syncRepositories() {
         ownerId: user.id,
       },
     });
-    const scannedFiles = await scanGitRepository(
-      repo.clone_url,
-      user.githubAccessToken,
-    );
+
+    const analysis = await runStaticAnalysis(
+  repo.clone_url,
+  user.githubAccessToken,
+);
+
+    
 
     await prisma.repositoryFile.deleteMany({
       where: {
@@ -72,7 +74,7 @@ export async function syncRepositories() {
     });
 
     await prisma.repositoryFile.createMany({
-      data: scannedFiles.map((file) => ({
+      data: analysis.files.map((file) => ({
         repositoryId: repository.id,
         path: file.path,
         name: file.name,
@@ -83,7 +85,7 @@ export async function syncRepositories() {
       })),
     });
 
-    const languageStats = analyzeLanguages(scannedFiles);
+    
 
     await prisma.languageStat.deleteMany({
       where: {
@@ -92,7 +94,7 @@ export async function syncRepositories() {
     });
 
     await prisma.languageStat.createMany({
-      data: languageStats.map((stat) => ({
+      data: analysis.languages.map((stat) => ({
         repositoryId: repository.id,
         language: stat.language,
         fileCount: stat.fileCount,
@@ -125,25 +127,25 @@ export async function syncRepositories() {
     if (analyzedCount >= MAX_ANALYSIS_PER_SYNC) {
       continue;
     }
-    const analysis = await analyzeRepository(readmeContent);
+    const aiAnalysis = await analyzeRepository(readmeContent);
     await prisma.repositoryAnalysis.upsert({
       where: {
         repositoryId: repository.id,
       },
       update: {
-        summary: analysis.summary,
-        techStack: analysis.techStack,
-        difficulty: analysis.difficulty,
-        architecture: analysis.architecture,
-        suggestions: analysis.suggestions,
+        summary: aiAnalysis.summary,
+        techStack: aiAnalysis.techStack,
+        difficulty: aiAnalysis.difficulty,
+        architecture: aiAnalysis.architecture,
+        suggestions: aiAnalysis.suggestions,
       },
       create: {
         repositoryId: repository.id,
-        summary: analysis.summary,
-        techStack: analysis.techStack,
-        difficulty: analysis.difficulty,
-        architecture: analysis.architecture,
-        suggestions: analysis.suggestions,
+        summary: aiAnalysis.summary,
+        techStack: aiAnalysis.techStack,
+        difficulty: aiAnalysis.difficulty,
+        architecture: aiAnalysis.architecture,
+        suggestions: aiAnalysis.suggestions,
       },
     });
     analyzedCount++;

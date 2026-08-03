@@ -23,6 +23,7 @@ export async function syncRepositories() {
   if (!user.githubAccessToken) {
     throw new Error("GitHub account not connected");
   }
+  
   const repositories = await getRepositories(user.githubAccessToken);
   let analyzedCount = 0;
   const MAX_ANALYSIS_PER_SYNC = 4;
@@ -102,6 +103,21 @@ export async function syncRepositories() {
         percentage: stat.percentage,
       })),
     });
+
+    await prisma.framework.deleteMany({
+  where: {
+    repositoryId: repository.id,
+  },
+});
+
+await prisma.framework.createMany({
+  data: analysis.frameworks.map((framework) => ({
+    repositoryId: repository.id,
+    name: framework.name,
+    version: framework.version,
+    category: framework.category,
+  })),
+});
 
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {

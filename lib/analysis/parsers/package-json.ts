@@ -3,14 +3,12 @@ import { join } from "path";
 
 export async function readPackageJson(
   repositoryPath: string,
-) {
+): Promise<string | null> {
   try {
-    const content = await readFile(
+    return await readFile(
       join(repositoryPath, "package.json"),
       "utf-8",
     );
-
-    return content;
   } catch {
     return null;
   }

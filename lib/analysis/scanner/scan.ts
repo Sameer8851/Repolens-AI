@@ -1,9 +1,9 @@
-import { readdir, stat, readFile } from "fs/promises";
-import { join, relative, extname, basename } from "path";
+import { readdir, readFile, stat } from "fs/promises";
+import { basename, extname, join, relative } from "path";
 
-import { IGNORE_DIRECTORIES } from "../../scanner/ignore";
-import { detectLanguage } from "../../scanner/language";
-import { ScannedFile,ScanResult } from "../../scanner/types";
+import { IGNORE_DIRECTORIES } from "./ignore";
+import { detectLanguage } from "./language";
+import { ScannedFile, ScanResult } from "./types";
 
 export async function scanRepository(
     repositoryPath: string

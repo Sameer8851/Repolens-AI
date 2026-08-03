@@ -17,6 +17,7 @@ export async function cloneRepository(
   const git = simpleGit();
 
   await git.clone(authenticatedUrl, tempDir);
+  
 
   return tempDir;
 }

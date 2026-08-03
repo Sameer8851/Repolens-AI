@@ -7,30 +7,28 @@ import { AnalysisResult } from "./types";
 import { analyzeLanguages } from "@/lib/analysis/analyzers/language";
 import { readPackageJson } from "./parsers/package-json";
 import { analyzePackageJson } from "./analyzers/framework";
+import { analyzeDependencies } from "./analyzers/dependency";
 
 export async function runStaticAnalysis(
   cloneUrl: string,
   accessToken: string,
 ): Promise<AnalysisResult> {
-  const repositoryPath = await cloneRepository(
-    cloneUrl,
-    accessToken,
-  );
+  const repositoryPath = await cloneRepository(cloneUrl, accessToken);
 
   try {
     const scanResult = await scanRepository(repositoryPath);
     const languages = analyzeLanguages(scanResult.files);
     const packageJson = await readPackageJson(repositoryPath);
 
-    const frameworks = packageJson
-  ? analyzePackageJson(packageJson)
-  : [];
+    const frameworks = packageJson ? analyzePackageJson(packageJson) : [];
+    const dependencies = packageJson ? analyzeDependencies(packageJson) : [];
 
     return {
-  files: scanResult.files,
-  languages,
-  frameworks,
-};
+      files: scanResult.files,
+      languages,
+      frameworks,
+      dependencies,
+    };
   } finally {
     await rm(repositoryPath, {
       recursive: true,

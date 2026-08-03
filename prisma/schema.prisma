@@ -47,6 +47,7 @@ model Repository {
   files RepositoryFile[]
   languageStats LanguageStat[]
   frameworks Framework[]
+  dependencies Dependency[]
 
   @@index([ownerId])
 }
@@ -120,4 +121,25 @@ model Framework {
   updatedAt DateTime @updatedAt
 
   @@index([repositoryId])
+}
+enum DependencyType {
+  PRODUCTION
+  DEVELOPMENT
+}
+model Dependency {
+  id String @id @default(cuid())
+
+  name    String
+  version String
+  type DependencyType
+
+  repositoryId String
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repositoryId])
+  @@index([type])
+  @@unique([repositoryId, name])
 }

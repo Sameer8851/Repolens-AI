@@ -23,7 +23,7 @@ export async function syncRepositories() {
   if (!user.githubAccessToken) {
     throw new Error("GitHub account not connected");
   }
-  
+
   const repositories = await getRepositories(user.githubAccessToken);
   let analyzedCount = 0;
   const MAX_ANALYSIS_PER_SYNC = 4;
@@ -62,11 +62,9 @@ export async function syncRepositories() {
     });
 
     const analysis = await runStaticAnalysis(
-  repo.clone_url,
-  user.githubAccessToken,
-);
-
-    
+      repo.clone_url,
+      user.githubAccessToken,
+    );
 
     await prisma.repositoryFile.deleteMany({
       where: {
@@ -86,8 +84,6 @@ export async function syncRepositories() {
       })),
     });
 
-    
-
     await prisma.languageStat.deleteMany({
       where: {
         repositoryId: repository.id,
@@ -105,19 +101,34 @@ export async function syncRepositories() {
     });
 
     await prisma.framework.deleteMany({
-  where: {
-    repositoryId: repository.id,
-  },
-});
+      where: {
+        repositoryId: repository.id,
+      },
+    });
 
-await prisma.framework.createMany({
-  data: analysis.frameworks.map((framework) => ({
-    repositoryId: repository.id,
-    name: framework.name,
-    version: framework.version,
-    category: framework.category,
-  })),
-});
+    await prisma.framework.createMany({
+      data: analysis.frameworks.map((framework) => ({
+        repositoryId: repository.id,
+        name: framework.name,
+        version: framework.version,
+        category: framework.category,
+      })),
+    });
+
+    await prisma.dependency.deleteMany({
+      where: {
+        repositoryId: repository.id,
+      },
+    });
+
+    await prisma.dependency.createMany({
+      data: analysis.dependencies.map((dependency) => ({
+        repositoryId: repository.id,
+        name: dependency.name,
+        version: dependency.version,
+        type: dependency.type,
+      })),
+    });
 
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {

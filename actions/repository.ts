@@ -130,6 +130,41 @@ export async function syncRepositories() {
       })),
     });
 
+    await prisma.repositoryMetric.upsert({
+      where: {
+        repositoryId: repository.id,
+      },
+      update: {
+        totalFiles: analysis.metrics.totalFiles,
+        totalLines: analysis.metrics.totalLines,
+        averageFileSize: analysis.metrics.averageFileSize,
+      },
+      create: {
+        repositoryId: repository.id,
+        totalFiles: analysis.metrics.totalFiles,
+        totalLines: analysis.metrics.totalLines,
+        averageFileSize: analysis.metrics.averageFileSize,
+      },
+    });
+
+    await prisma.codeMetric.deleteMany({
+  where: {
+    repositoryId: repository.id,
+  },
+});
+
+await prisma.codeMetric.createMany({
+  data: analysis.codeMetrics.map((metric) => ({
+    repositoryId: repository.id,
+    path: metric.path,
+    functions: metric.functions,
+    classes: metric.classes,
+    interfaces: metric.interfaces,
+    imports: metric.imports,
+    exports: metric.exports,
+  })),
+});
+
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {
         repositoryId: repository.id,

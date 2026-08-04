@@ -48,6 +48,8 @@ model Repository {
   languageStats LanguageStat[]
   frameworks Framework[]
   dependencies Dependency[]
+  metrics RepositoryMetric?
+  codeMetrics CodeMetric[]
 
   @@index([ownerId])
 }
@@ -142,4 +144,40 @@ model Dependency {
   @@index([repositoryId])
   @@index([type])
   @@unique([repositoryId, name])
+}
+
+model RepositoryMetric {
+  id String @id @default(cuid())
+
+  totalFiles Int
+  totalLines Int
+
+  averageFileSize Float
+
+  repositoryId String @unique
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CodeMetric {
+  id String @id @default(cuid())
+
+  path String
+
+  functions Int
+  classes Int
+  interfaces Int
+
+  imports Int
+  exports Int
+
+  repositoryId String
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repositoryId])
 }

@@ -148,22 +148,48 @@ export async function syncRepositories() {
     });
 
     await prisma.codeMetric.deleteMany({
-  where: {
-    repositoryId: repository.id,
-  },
-});
+      where: {
+        repositoryId: repository.id,
+      },
+    });
 
-await prisma.codeMetric.createMany({
-  data: analysis.codeMetrics.map((metric) => ({
-    repositoryId: repository.id,
-    path: metric.path,
-    functions: metric.functions,
-    classes: metric.classes,
-    interfaces: metric.interfaces,
-    imports: metric.imports,
-    exports: metric.exports,
-  })),
-});
+    await prisma.codeMetric.createMany({
+      data: analysis.codeMetrics.map((metric) => ({
+        repositoryId: repository.id,
+        path: metric.path,
+        functions: metric.functions,
+        classes: metric.classes,
+        interfaces: metric.interfaces,
+        imports: metric.imports,
+        exports: metric.exports,
+      })),
+    });
+
+    await prisma.healthReport.upsert({
+      where: {
+        repositoryId: repository.id,
+      },
+      update: {
+        overallScore: analysis.health.overallScore,
+        grade: analysis.health.grade,
+        documentationScore: analysis.health.documentationScore,
+        architectureScore: analysis.health.architectureScore,
+        dependencyScore: analysis.health.dependencyScore,
+        codeQualityScore: analysis.health.codeQualityScore,
+        repositoryScore: analysis.health.repositoryScore,
+      },
+      create: {
+        repositoryId: repository.id,
+        overallScore: analysis.health.overallScore,
+        grade: analysis.health.grade,
+        documentationScore: analysis.health.documentationScore,
+        architectureScore: analysis.health.architectureScore,
+        dependencyScore: analysis.health.dependencyScore,
+        codeQualityScore: analysis.health.codeQualityScore,
+        repositoryScore: analysis.health.repositoryScore,
+      },
+    });
+    console.log(analysis.health);
 
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {

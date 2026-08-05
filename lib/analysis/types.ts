@@ -6,6 +6,7 @@ import { ProjectStructure } from "./analyzers/project-structure";
 import { ArchitectureAnalysis } from "./analyzers/architecture";
 import { RepositoryMetrics } from "./analyzers/metrics";
 import { FileCodeMetric } from "./analyzers/code-metrics";
+import { HealthAnalysis } from "./analyzers/health";
 
 export interface AnalysisResult {
   files: ScannedFile[];
@@ -16,4 +17,5 @@ export interface AnalysisResult {
   architecture: ArchitectureAnalysis;
   metrics: RepositoryMetrics;
   codeMetrics: FileCodeMetric[];
+  health: HealthAnalysis;
 }

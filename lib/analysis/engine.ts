@@ -12,6 +12,7 @@ import { analyzeProjectStructure } from "./analyzers/project-structure";
 import { analyzeArchitecture } from "./analyzers/architecture";
 import { analyzeMetrics } from "./analyzers/metrics";
 import { analyzeCodeMetrics } from "./analyzers/code-metrics";
+import { analyzeHealth } from "./analyzers/health";
 
 export async function runStaticAnalysis(
   cloneUrl: string,
@@ -44,6 +45,17 @@ export async function runStaticAnalysis(
       codeMetrics.push(metric);
     }
 
+    const health = analyzeHealth({
+      files: scanResult.files,
+      languages,
+      frameworks,
+      dependencies,
+      structure,
+      architecture,
+      metrics,
+      codeMetrics,
+    });
+
     return {
       files: scanResult.files,
       languages,
@@ -53,6 +65,7 @@ export async function runStaticAnalysis(
       architecture,
       metrics,
       codeMetrics,
+      health,
     };
   } finally {
     await rm(repositoryPath, {

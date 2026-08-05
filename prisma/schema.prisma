@@ -50,6 +50,7 @@ model Repository {
   dependencies Dependency[]
   metrics RepositoryMetric?
   codeMetrics CodeMetric[]
+  healthReport HealthReport?
 
   @@index([ownerId])
 }
@@ -180,4 +181,23 @@ model CodeMetric {
   updatedAt DateTime @updatedAt
 
   @@index([repositoryId])
+}
+
+model HealthReport {
+  id String @id @default(cuid())
+
+  overallScore Int
+  grade String
+
+  documentationScore Int
+  architectureScore Int
+  dependencyScore Int
+  codeQualityScore Int
+  repositoryScore Int
+
+  repositoryId String @unique
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -189,7 +189,24 @@ export async function syncRepositories() {
         repositoryScore: analysis.health.repositoryScore,
       },
     });
-    console.log(analysis.health);
+
+    await prisma.repositoryIssue.deleteMany({
+      where: {
+        repositoryId: repository.id,
+      },
+    });
+
+    await prisma.repositoryIssue.createMany({
+      data: analysis.issues.map((issue) => ({
+        repositoryId: repository.id,
+        type: issue.type,
+        category: issue.category,
+        severity: issue.severity,
+        message: issue.message,
+        filePath: issue.filePath ?? null,
+        lineNumber: issue.lineNumber ?? null,
+      })),
+    });
 
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {

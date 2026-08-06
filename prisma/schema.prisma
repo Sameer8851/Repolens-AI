@@ -51,6 +51,7 @@ model Repository {
   metrics RepositoryMetric?
   codeMetrics CodeMetric[]
   healthReport HealthReport?
+  issues RepositoryIssue[]
 
   @@index([ownerId])
 }
@@ -200,4 +201,44 @@ model HealthReport {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+
+// Issue Detection Models
+
+enum IssueSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum IssueStatus {
+  OPEN
+  FIXED
+  IGNORED
+}
+
+model RepositoryIssue {
+  id String @id @default(cuid())
+
+  type String
+  category String
+
+  severity IssueSeverity
+  status IssueStatus @default(OPEN)
+
+  message String
+
+  filePath String?
+  lineNumber Int?
+
+  repositoryId String
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([repositoryId])
+  @@index([severity])
+  @@index([type])
 }

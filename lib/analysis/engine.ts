@@ -13,6 +13,8 @@ import { analyzeArchitecture } from "./analyzers/architecture";
 import { analyzeMetrics } from "./analyzers/metrics";
 import { analyzeCodeMetrics } from "./analyzers/code-metrics";
 import { analyzeHealth } from "./analyzers/health";
+import { detectRepositoryIssues } from "./issues/engine";
+
 
 export async function runStaticAnalysis(
   cloneUrl: string,
@@ -55,8 +57,7 @@ export async function runStaticAnalysis(
       metrics,
       codeMetrics,
     });
-
-    return {
+    const analysis: AnalysisResult = {
       files: scanResult.files,
       languages,
       frameworks,
@@ -66,7 +67,14 @@ export async function runStaticAnalysis(
       metrics,
       codeMetrics,
       health,
+      issues: [], // temporary
     };
+    analysis.issues = await detectRepositoryIssues(
+      scanResult.repositoryPath,
+      analysis,
+    );
+
+    return analysis;
   } finally {
     await rm(repositoryPath, {
       recursive: true,

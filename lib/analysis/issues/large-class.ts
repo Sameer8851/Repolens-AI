@@ -1,21 +1,14 @@
-import { ScannedFile } from "../scanner/types";
+import { ASTContext } from "../ast/engine";
 import { RepositoryIssue } from "./types";
-import { createProject } from "../ast/project";
-import { loadSourceFiles } from "../ast/source-files";
 
 const MAX_METHODS = 20;
 
-export async function detectLargeClasses(
-  repositoryPath: string,
-  files: ScannedFile[],
-): Promise<RepositoryIssue[]> {
+export function detectLargeClasses(
+  context: ASTContext,
+): RepositoryIssue[] {
   const issues: RepositoryIssue[] = [];
 
-  const project = createProject();
-
-  const sourceFiles = loadSourceFiles(project, repositoryPath, files);
-
-  for (const sourceFile of sourceFiles) {
+  for (const sourceFile of context.sourceFiles) {
     const classes = sourceFile.getClasses();
 
     for (const cls of classes) {

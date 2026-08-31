@@ -7,15 +7,17 @@ import { detectMissingTests } from "./tests";
 import { detectUnusedDependencies } from "./unused-dependencies";
 import { detectLongFunctions } from "./long-function";
 import { detectLargeClasses } from "./large-class";
+import { createASTContext } from "../ast/engine";
+import { detectComplexity } from "./complexity";
+
 
 export async function detectRepositoryIssues(
   repositoryPath: string,
   analysis: AnalysisResult,
 ): Promise<RepositoryIssue[]> {
   const issues: RepositoryIssue[] = [];
-
+  const astContext = createASTContext(repositoryPath, analysis.files);
   issues.push(...detectLongFiles(analysis.files));
-
   issues.push(...(await detectTodos(repositoryPath, analysis.files)));
   issues.push(...detectMissingDocumentation(analysis.files));
   issues.push(...detectMissingTests(analysis.files));
@@ -26,7 +28,9 @@ export async function detectRepositoryIssues(
       analysis.dependencies,
     )),
   );
-  issues.push(...(await detectLongFunctions(repositoryPath, analysis.files)));
-  issues.push(...(await detectLargeClasses(repositoryPath, analysis.files)));
+  issues.push(...detectLongFunctions(astContext));
+  issues.push(...detectLargeClasses(astContext));
+  issues.push(...detectComplexity(astContext));
+  
   return issues;
 }

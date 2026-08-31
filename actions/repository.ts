@@ -72,6 +72,24 @@ export async function syncRepositories() {
       },
     });
 
+    await prisma.repositoryIssue.deleteMany({
+      where: {
+        repositoryId: repository.id,
+      },
+    });
+
+    await prisma.repositoryIssue.createMany({
+      data: analysis.issues.map((issue) => ({
+        repositoryId: repository.id,
+        type: issue.type,
+        severity: issue.severity,
+        category: issue.category,
+        message: issue.message,
+        filePath: issue.filePath ?? null,
+        lineNumber: issue.lineNumber ?? null,
+      })),
+    });
+
     await prisma.repositoryFile.createMany({
       data: analysis.files.map((file) => ({
         repositoryId: repository.id,

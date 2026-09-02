@@ -10,6 +10,7 @@ import { detectLargeClasses } from "./large-class";
 import { createASTContext } from "../ast/engine";
 import { detectComplexity } from "./complexity";
 import { detectDuplicateCode } from "./duplicate-code";
+import { detectCircularDependencies } from "./circular-dependency";
 
 
 export async function detectRepositoryIssues(
@@ -17,6 +18,7 @@ export async function detectRepositoryIssues(
   analysis: AnalysisResult,
 ): Promise<RepositoryIssue[]> {
   const issues: RepositoryIssue[] = [];
+  
   
   const astContext = createASTContext(repositoryPath, analysis.files);
   issues.push(...detectLongFiles(analysis.files));
@@ -32,6 +34,12 @@ export async function detectRepositoryIssues(
   );
   issues.push(
   ...(await detectDuplicateCode(
+    repositoryPath,
+    analysis.files,
+  )),
+);
+issues.push(
+  ...(await detectCircularDependencies(
     repositoryPath,
     analysis.files,
   )),

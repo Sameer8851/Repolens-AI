@@ -43,15 +43,17 @@ model Repository {
   ownerId         String
   owner           User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  analysis RepositoryAnalysis?
-  files RepositoryFile[]
+  analysis      RepositoryAnalysis?
+  files         RepositoryFile[]
   languageStats LanguageStat[]
-  frameworks Framework[]
-  dependencies Dependency[]
-  metrics RepositoryMetric?
-  codeMetrics CodeMetric[]
-  healthReport HealthReport?
-  issues RepositoryIssue[]
+  frameworks    Framework[]
+  dependencies  Dependency[]
+  metrics       RepositoryMetric?
+  codeMetrics   CodeMetric[]
+  healthReport  HealthReport?
+  issues        RepositoryIssue[]
+
+  engineeringReview EngineeringReview?
 
   @@index([ownerId])
 }
@@ -72,20 +74,20 @@ model RepositoryAnalysis {
 }
 
 model RepositoryFile {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  path         String
-  name         String
-  extension    String
-  language     String?
-  size         Int
-  lineCount    Int
+  path      String
+  name      String
+  extension String
+  language  String?
+  size      Int
+  lineCount Int
 
   repositoryId String
   repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([repositoryId])
   @@index([language])
@@ -97,12 +99,12 @@ model LanguageStat {
 
   language String
 
-  fileCount Int
-  lineCount Int
+  fileCount  Int
+  lineCount  Int
   percentage Float
 
   repositoryId String
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,39 +115,41 @@ model LanguageStat {
 model Framework {
   id String @id @default(cuid())
 
-  name String
+  name    String
   version String?
 
   category String
 
   repositoryId String
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([repositoryId])
 }
+
 enum DependencyType {
   PRODUCTION
   DEVELOPMENT
 }
+
 model Dependency {
   id String @id @default(cuid())
 
   name    String
   version String
-  type DependencyType
+  type    DependencyType
 
   repositoryId String
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([repositoryId, name])
   @@index([repositoryId])
   @@index([type])
-  @@unique([repositoryId, name])
 }
 
 model RepositoryMetric {
@@ -156,8 +160,8 @@ model RepositoryMetric {
 
   averageFileSize Float
 
-  repositoryId String @unique
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId String     @unique
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -168,15 +172,15 @@ model CodeMetric {
 
   path String
 
-  functions Int
-  classes Int
+  functions  Int
+  classes    Int
   interfaces Int
 
   imports Int
   exports Int
 
   repositoryId String
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -188,21 +192,20 @@ model HealthReport {
   id String @id @default(cuid())
 
   overallScore Int
-  grade String
+  grade        String
 
   documentationScore Int
-  architectureScore Int
-  dependencyScore Int
-  codeQualityScore Int
-  repositoryScore Int
+  architectureScore  Int
+  dependencyScore    Int
+  codeQualityScore   Int
+  repositoryScore    Int
 
-  repositoryId String @unique
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId String     @unique
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
 
 // Issue Detection Models
 
@@ -221,19 +224,19 @@ enum IssueStatus {
 model RepositoryIssue {
   id String @id @default(cuid())
 
-  type String
+  type     String
   category String
 
   severity IssueSeverity
-  status IssueStatus @default(OPEN)
+  status   IssueStatus   @default(OPEN)
 
   message String
 
-  filePath String?
+  filePath   String?
   lineNumber Int?
 
   repositoryId String
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -241,4 +244,19 @@ model RepositoryIssue {
   @@index([repositoryId])
   @@index([severity])
   @@index([type])
+}
+
+model EngineeringReview {
+  id                 String @id @default(cuid())
+  executiveSummary   String
+  architectureReview String
+  strengths          Json
+  risks              Json
+  recommendations    Json
+
+  repositoryId String     @unique
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

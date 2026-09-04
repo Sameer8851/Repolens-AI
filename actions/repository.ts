@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getRepositories, getRepositoryReadme } from "@/lib/github";
 import { analyzeRepository } from "@/lib/ai/repository-review";
 import { runStaticAnalysis } from "@/lib/analysis/engine";
+import { runEngineeringReview } from "@/lib/ai/run-engineering-review";
 
 export async function syncRepositories() {
   const { userId } = await auth();
@@ -26,7 +27,7 @@ export async function syncRepositories() {
 
   const repositories = await getRepositories(user.githubAccessToken);
   let analyzedCount = 0;
-  const MAX_ANALYSIS_PER_SYNC = 4;
+  const MAX_ANALYSIS_PER_SYNC = 1;
 
   for (const repo of repositories) {
     const repository = await prisma.repository.upsert({
@@ -72,23 +73,6 @@ export async function syncRepositories() {
       },
     });
 
-    await prisma.repositoryIssue.deleteMany({
-      where: {
-        repositoryId: repository.id,
-      },
-    });
-
-    await prisma.repositoryIssue.createMany({
-      data: analysis.issues.map((issue) => ({
-        repositoryId: repository.id,
-        type: issue.type,
-        severity: issue.severity,
-        category: issue.category,
-        message: issue.message,
-        filePath: issue.filePath ?? null,
-        lineNumber: issue.lineNumber ?? null,
-      })),
-    });
 
     await prisma.repositoryFile.createMany({
       data: analysis.files.map((file) => ({
@@ -226,6 +210,24 @@ export async function syncRepositories() {
       })),
     });
 
+    if (analyzedCount < MAX_ANALYSIS_PER_SYNC) {
+      const engineeringReview = await runEngineeringReview(
+        {
+          name: repository.name,
+          description: repository.description,
+          language: repository.language,
+        },
+        analysis,
+      );
+
+      console.log(
+        "Engineering Review:",
+        engineeringReview,
+      );
+
+      analyzedCount++;
+    }
+
     const existingAnalysis = await prisma.repositoryAnalysis.findUnique({
       where: {
         repositoryId: repository.id,
@@ -273,6 +275,9 @@ export async function syncRepositories() {
     });
     analyzedCount++;
   }
+
+
+
   return {
     success: true,
     message: "Repositories synced successfully",

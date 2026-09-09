@@ -21,6 +21,7 @@ export async function getDashboardRepositories() {
         },
         include: {
             analysis: true,
+            engineeringReview: true,
         },
         orderBy: {
             stargazersCount: "desc",

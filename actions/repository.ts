@@ -6,6 +6,7 @@ import { getRepositories, getRepositoryReadme } from "@/lib/github";
 import { analyzeRepository } from "@/lib/ai/repository-review";
 import { runStaticAnalysis } from "@/lib/analysis/engine";
 import { runEngineeringReview } from "@/lib/ai/run-engineering-review";
+import { createAnalysisHash } from "@/lib/analysis/hash";
 
 export async function syncRepositories() {
   const { userId } = await auth();
@@ -66,6 +67,7 @@ export async function syncRepositories() {
       repo.clone_url,
       user.githubAccessToken,
     );
+    const analysisHash = createAnalysisHash(analysis);
 
     await prisma.repositoryFile.deleteMany({
       where: {
@@ -211,19 +213,64 @@ export async function syncRepositories() {
     });
 
     if (analyzedCount < MAX_ANALYSIS_PER_SYNC) {
-      const engineeringReview = await runEngineeringReview(
-        {
-          name: repository.name,
-          description: repository.description,
-          language: repository.language,
-        },
-        analysis,
-      );
+      const existingEngineeringReview =
+        await prisma.engineeringReview.findUnique({
+          where: {
+            repositoryId: repository.id,
+          },
+        });
 
-      console.log(
-        "Engineering Review:",
-        engineeringReview,
-      );
+      if (
+        existingEngineeringReview &&
+        existingEngineeringReview.analysisHash === analysisHash
+      ) {
+        console.log(
+          `Engineering review is up to date for ${repository.name}`
+        );
+      } else {
+        try {
+          const engineeringReview = await runEngineeringReview(
+            {
+              name: repository.name,
+              description: repository.description,
+              language: repository.language,
+            },
+            analysis,
+          );
+
+          await prisma.engineeringReview.upsert({
+            where: {
+              repositoryId: repository.id,
+            },
+            update: {
+              executiveSummary: engineeringReview.executiveSummary,
+              architectureReview: engineeringReview.architectureReview,
+              strengths: engineeringReview.strengths,
+              risks: engineeringReview.risks,
+              recommendations: engineeringReview.recommendations,
+              analysisHash,
+            },
+            create: {
+              repositoryId: repository.id,
+              executiveSummary: engineeringReview.executiveSummary,
+              architectureReview: engineeringReview.architectureReview,
+              strengths: engineeringReview.strengths,
+              risks: engineeringReview.risks,
+              recommendations: engineeringReview.recommendations,
+              analysisHash,
+            },
+          });
+
+          console.log(
+            `Engineering review saved for ${repository.name}`
+          );
+        } catch (error) {
+          console.error(
+            `Engineering review failed for ${repository.name}:`,
+            error,
+          );
+        }
+      }
 
       analyzedCount++;
     }

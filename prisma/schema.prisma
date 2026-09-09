@@ -253,7 +253,8 @@ model EngineeringReview {
   strengths          Json
   risks              Json
   recommendations    Json
-
+  analysisHash String
+  
   repositoryId String     @unique
   repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 

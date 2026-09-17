@@ -3,6 +3,7 @@ import { join, dirname, normalize, relative } from "path";
 
 import { ScannedFile } from "../scanner/types";
 import { RepositoryIssue } from "./types";
+import { buildDependencyGraph } from "../architecture/dependency-graph";
 
 function normalizePath(filePath: string): string {
     return filePath.replace(/\\/g, "/");
@@ -73,7 +74,10 @@ function resolveImportPath(
 
 export async function detectCircularDependencies(repositoryPath: string, files: ScannedFile[]): Promise<RepositoryIssue[]> {
     const issues: RepositoryIssue[] = [];
-    const graph = new Map<string, string[]>();
+    const graph = await buildDependencyGraph(
+  repositoryPath,
+  files,
+);
     for (const file of files) {
         if (
             !["ts", "tsx", "js", "jsx"].includes(file.extension)

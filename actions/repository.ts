@@ -224,9 +224,7 @@ export async function syncRepositories() {
         existingEngineeringReview &&
         existingEngineeringReview.analysisHash === analysisHash
       ) {
-        console.log(
-          `Engineering review is up to date for ${repository.name}`
-        );
+        
       } else {
         try {
           const engineeringReview = await runEngineeringReview(
@@ -261,9 +259,7 @@ export async function syncRepositories() {
             },
           });
 
-          console.log(
-            `Engineering review saved for ${repository.name}`
-          );
+          
         } catch (error) {
           console.error(
             `Engineering review failed for ${repository.name}:`,

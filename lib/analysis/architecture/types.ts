@@ -7,6 +7,7 @@ export interface ArchitectureIntelligence {
   coupling: {
     score: number;
     findings: string[];
+    averageDependencies: number;
   };
 
   cohesion: {

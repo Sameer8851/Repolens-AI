@@ -14,6 +14,8 @@ import { analyzeMetrics } from "./analyzers/metrics";
 import { analyzeCodeMetrics } from "./analyzers/code-metrics";
 import { analyzeHealth } from "./analyzers/health";
 import { detectRepositoryIssues } from "./issues/engine";
+import { buildDependencyGraph } from "./architecture/dependency-graph";
+import { analyzeArchitectureIntelligence } from "./architecture";
 
 
 export async function runStaticAnalysis(
@@ -47,6 +49,17 @@ export async function runStaticAnalysis(
       codeMetrics.push(metric);
     }
 
+    const dependencyGraph = await buildDependencyGraph(
+  scanResult.repositoryPath,
+  scanResult.files,
+);
+
+const architectureIntelligence = analyzeArchitectureIntelligence(
+  structure,
+  dependencyGraph,
+  codeMetrics,
+);
+
     const health = analyzeHealth({
       files: scanResult.files,
       languages,
@@ -68,11 +81,13 @@ export async function runStaticAnalysis(
       codeMetrics,
       health,
       issues: [], // temporary
+      architectureIntelligence,
     };
     analysis.issues = await detectRepositoryIssues(
       scanResult.repositoryPath,
       analysis,
     );
+    
 
     return analysis;
   } finally {

@@ -4,16 +4,20 @@ import { ArchitectureIntelligence } from "./types";
 import { analyzeCoupling } from "./coupling";
 import { analyzeCohesion } from "./cohesion";
 import { FileCodeMetric } from "../analyzers/code-metrics";
+import { InheritanceMetric } from "../analyzers/inheritance";
+import { analyzeSolid } from "./solid";
 
 export function analyzeArchitectureIntelligence(
   structure: ProjectStructure,
   dependencyGraph: Map<string, string[]>,
   codeMetrics: FileCodeMetric[],
+  inheritanceMetrics: InheritanceMetric[],
 ): ArchitectureIntelligence {
   const layerSeparation = analyzeLayerSeparation(structure);
   const coupling =
     analyzeCoupling(dependencyGraph);
     const cohesion = analyzeCohesion(codeMetrics);
+    const solid = analyzeSolid(codeMetrics, inheritanceMetrics);
 
   return {
     layerSeparation,
@@ -22,10 +26,7 @@ export function analyzeArchitectureIntelligence(
 
     cohesion,
 
-    solid: {
-      score: 0,
-      findings: [],
-    },
+    solid,
 
     designPatterns: {
       detected: [],

@@ -1,3 +1,4 @@
+import { SolidAnalysis } from "./solid/types";
 export interface ArchitectureIntelligence {
   layerSeparation: {
     score: number;
@@ -15,10 +16,7 @@ export interface ArchitectureIntelligence {
     findings: string[];
   };
 
-  solid: {
-    score: number;
-    findings: string[];
-  };
+  solid: SolidAnalysis;
 
   designPatterns: {
     detected: string[];

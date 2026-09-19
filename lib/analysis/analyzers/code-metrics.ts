@@ -8,6 +8,7 @@ export interface FileCodeMetric {
   interfaces: number;
   imports: number;
   exports: number;
+  conditionalBranches: number;
 }
 
 export async function analyzeCodeMetrics(
@@ -33,6 +34,11 @@ export async function analyzeCodeMetrics(
 
   const exports =
     (content.match(/^export\s/mg) ?? []).length;
+  
+  const conditionalBranches =
+  (content.match(/\bif\s*\(/g) ?? []).length +
+  (content.match(/\bswitch\s*\(/g) ?? []).length +
+  (content.match(/\bcase\s+/g) ?? []).length;
 
   return {
     path: relativePath,
@@ -41,5 +47,6 @@ export async function analyzeCodeMetrics(
     interfaces,
     imports,
     exports,
+    conditionalBranches,
   };
 }

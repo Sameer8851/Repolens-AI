@@ -16,6 +16,8 @@ import { analyzeHealth } from "./analyzers/health";
 import { detectRepositoryIssues } from "./issues/engine";
 import { buildDependencyGraph } from "./architecture/dependency-graph";
 import { analyzeArchitectureIntelligence } from "./architecture";
+import { createASTContext } from "./ast/engine";
+import { analyzeInheritance } from "./analyzers/inheritance";
 
 
 export async function runStaticAnalysis(
@@ -34,6 +36,11 @@ export async function runStaticAnalysis(
     const structure = analyzeProjectStructure(scanResult.files);
     const architecture = analyzeArchitecture(structure);
     const metrics = analyzeMetrics(scanResult.files);
+    const astContext = createASTContext(
+  scanResult.repositoryPath,
+  scanResult.files,
+);
+const inheritanceMetrics = analyzeInheritance(astContext);
     const codeMetrics = [];
 
     for (const file of scanResult.files) {
@@ -58,6 +65,7 @@ const architectureIntelligence = analyzeArchitectureIntelligence(
   structure,
   dependencyGraph,
   codeMetrics,
+  inheritanceMetrics,
 );
 
     const health = analyzeHealth({
